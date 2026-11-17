@@ -1,0 +1,19 @@
+# secrets — NEVER commit
+.env
+*.pem
+*credentials*
+# data and models live in S3, not in Git
+local_s3/
+data/
+*.pkl
+*.parquet
+*.xlsx
+client/drift_traffic.csv
+# python / tools
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/

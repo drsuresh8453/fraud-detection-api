@@ -1,0 +1,97 @@
+# CI/CD — every push to main: test → build Docker image → push to ECR → deploy to EKS → smoke test (auto-rollback on failure)
+# Repository secrets needed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: fraud-api
+  EKS_CLUSTER: fraud-cluster
+  K8S_NAMESPACE: fraud
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Download model + artifacts from S3
+        run: python -m scripts.download_artifacts --dest local_s3
+      - name: Unit + API + feature-parity + latency tests
+        env:
+          STORAGE_MODE: local
+          LOCAL_STORAGE_DIR: ./local_s3
+        run: pytest
+
+  build-push:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.img.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push image (tag = commit id + latest)
+        id: img
+        run: |
+          IMAGE=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
+          echo "image=$IMAGE:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Connect kubectl to EKS
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+      - name: Apply manifests with the new image
+        run: |
+          IMAGE=${{ needs.build-push.outputs.image }}
+          kubectl apply -f k8s/00-namespace.yaml -f k8s/01-configmap.yaml -f k8s/04-service.yaml -f k8s/05-hpa.yaml
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/03-deployment.yaml   | kubectl apply -f -
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/06-drift-cronjob.yaml | kubectl apply -f -
+          kubectl rollout status deployment/fraud-api -n $K8S_NAMESPACE --timeout=400s
+      - name: Smoke test the live API
+        run: |
+          HOST=$(kubectl get svc fraud-api -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          for i in $(seq 1 30); do curl -sf http://$HOST/health && break; sleep 10; done
+          curl -sf http://$HOST/health
+          curl -sf -X POST http://$HOST/score -H "Content-Type: application/json" \
+               -d "$(python3 -c 'import json;print(json.dumps(json.load(open("client/sample_requests.json"))["2_account_takeover"]))')"
+      - name: Roll back if anything failed
+        if: failure()
+        run: kubectl rollout undo deployment/fraud-api -n $K8S_NAMESPACE

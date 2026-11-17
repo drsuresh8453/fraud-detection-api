@@ -1,0 +1,42 @@
+# The API. IMAGE_PLACEHOLDER is replaced by CI/CD (or by the sed command in HOW_TO_RUN.md).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-api
+  namespace: fraud
+  labels: {app: fraud-api}
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5                 # keeps old versions for `kubectl rollout undo`
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}   # zero downtime: a new pod must be READY before an old one stops
+  selector:
+    matchLabels: {app: fraud-api}
+  template:
+    metadata:
+      labels: {app: fraud-api}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: api
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8000}]
+          envFrom:
+            - configMapRef: {name: fraud-api-config}
+            - secretRef: {name: aws-credentials}
+          resources:
+            requests: {cpu: "500m", memory: "1Gi"}
+            limits: {cpu: "2", memory: "2Gi"}
+          startupProbe:                    # loading model + feature store from S3 takes ~20-60 s
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:                  # only READY pods receive payments
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+          livenessProbe:                   # restart a stuck pod
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 20
+            failureThreshold: 3

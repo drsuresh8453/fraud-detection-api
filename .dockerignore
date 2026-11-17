@@ -1,0 +1,13 @@
+.git
+.github
+local_s3
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.pytest_cache
+.ruff_cache
+tests
+docs
+*.ipynb_checkpoints
+client/drift_traffic.csv

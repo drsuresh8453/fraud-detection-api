@@ -1,0 +1,26 @@
+# Non-secret settings (read by src/config.py). Edit the values marked CHANGE-ME, then: kubectl apply -f k8s/01-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraud-api-config
+  namespace: fraud
+data:
+  STORAGE_MODE: "s3"
+  S3_BUCKET: "fraud-detection-project-2026-suresh"
+  AWS_REGION: "ap-south-1"
+  MODEL_RELOAD_SECONDS: "300"        # pods check S3 for a new model every 5 minutes
+  LOG_PREDICTIONS: "true"
+  LOG_FLUSH_EVERY: "200"
+  LOG_FLUSH_SECONDS: "60"
+  DRIFT_WINDOW_DAYS: "7"
+  PSI_LIMIT: "0.25"
+  RECALL_LIMIT: "0.90"
+  ALERT_RATE_LIMIT: "0.05"
+  RETRAIN_COOLDOWN_DAYS: "14"
+  # ── automatic retraining (Phase 10) ──
+  SAGEMAKER_ROLE_ARN: ""             # CHANGE-ME  arn:aws:iam::<ACCOUNT_ID>:role/FraudSageMakerRole
+  SAGEMAKER_IMAGE_URI: ""            # CHANGE-ME  <ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/fraud-api:latest
+  SAGEMAKER_INSTANCE: "ml.m5.xlarge"
+  GIT_REPO_URL: ""                   # CHANGE-ME  https://github.com/<you>/fraud-detection-api.git (public repo) or "" = code in the image
+  SNS_TOPIC_ARN: ""                  # CHANGE-ME  arn:aws:sns:ap-south-1:<ACCOUNT_ID>:fraud-model-alerts
+  GITHUB_REPO: ""                    # optional   <you>/fraud-detection-api  (restart pods right after a new model)

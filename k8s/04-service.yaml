@@ -1,0 +1,12 @@
+# Public entry point. On EKS → AWS creates a Load Balancer (URL in EXTERNAL-IP). On minikube → `minikube service`.
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-api
+  namespace: fraud
+spec:
+  type: LoadBalancer
+  selector: {app: fraud-api}
+  ports:
+    - port: 80
+      targetPort: 8000

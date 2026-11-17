@@ -1,0 +1,6 @@
+# Always LF line endings (Windows/Git Bash safe: Dockerfile, YAML, .env, shell commands)
+* text=auto eol=lf
+*.png binary
+*.pkl binary
+*.parquet binary
+*.xlsx binary

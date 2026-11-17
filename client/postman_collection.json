@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "Fraud Detection API",
+    "description": "Created by Suresh D R | AI Product Developer & Technology Mentor",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Model info",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/model-info",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "model-info"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Score \u2014 1_genuine_upi_payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN30082727\",\n  \"txn_timestamp\": \"2026-05-09T14:42:50\",\n  \"customer_id\": \"C100637\",\n  \"amount\": 591.0,\n  \"channel\": \"UPI\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"ravi6352@ybl\",\n  \"merchant_category\": null,\n  \"remarks\": \"EMI\",\n  \"device_id\": \"D45404572\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"IN\",\n  \"txn_city\": \"Hubballi\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 0,\n  \"login_to_pay_seconds\": 19.1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('has score and band', () => { pm.expect(r.fraud_score).to.be.a('number'); pm.expect(r.risk_band).to.be.a('string'); });",
+              "console.log(r.txn_id, r.fraud_score, r.risk_band, r.reasons);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 2_account_takeover",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN30090229\",\n  \"txn_timestamp\": \"2026-07-24T01:10:00\",\n  \"customer_id\": \"C101687\",\n  \"amount\": 42200.0,\n  \"channel\": \"UPI\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"payment.verify770@paytm\",\n  \"merchant_category\": null,\n  \"remarks\": null,\n  \"device_id\": \"FD7440452\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"IN\",\n  \"txn_city\": \"Patna\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 0,\n  \"login_to_pay_seconds\": 19.5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('has score and band', () => { pm.expect(r.fraud_score).to.be.a('number'); pm.expect(r.risk_band).to.be.a('string'); });",
+              "console.log(r.txn_id, r.fraud_score, r.risk_band, r.reasons);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 3_vishing_kyc_scam",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN30087866\",\n  \"txn_timestamp\": \"2026-06-29T16:08:00\",\n  \"customer_id\": \"C100735\",\n  \"amount\": 1999.0,\n  \"channel\": \"UPI\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"refund.desk579@upi\",\n  \"merchant_category\": null,\n  \"remarks\": null,\n  \"device_id\": \"D71325996\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"IN\",\n  \"txn_city\": \"Hyderabad\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 0,\n  \"login_to_pay_seconds\": 34.9\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('has score and band', () => { pm.expect(r.fraud_score).to.be.a('number'); pm.expect(r.risk_band).to.be.a('string'); });",
+              "console.log(r.txn_id, r.fraud_score, r.risk_band, r.reasons);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 4_sim_swap",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN30085844\",\n  \"txn_timestamp\": \"2026-06-09T01:53:00\",\n  \"customer_id\": \"C100823\",\n  \"amount\": 46400.0,\n  \"channel\": \"UPI\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"payment.verify619@paytm\",\n  \"merchant_category\": null,\n  \"remarks\": null,\n  \"device_id\": \"FD1149534\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"IN\",\n  \"txn_city\": \"Patna\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 1,\n  \"login_to_pay_seconds\": 23.6\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('has score and band', () => { pm.expect(r.fraud_score).to.be.a('number'); pm.expect(r.risk_band).to.be.a('string'); });",
+              "console.log(r.txn_id, r.fraud_score, r.risk_band, r.reasons);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 5_new_live_payment_takeover_signals",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN99000001\",\n  \"txn_timestamp\": \"2026-11-14T02:40:00\",\n  \"customer_id\": \"C100637\",\n  \"amount\": 49999.0,\n  \"channel\": \"UPI\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"quickcash642@paytm\",\n  \"merchant_category\": null,\n  \"remarks\": \"urgent kyc verification\",\n  \"device_id\": \"D-NEW-PHONE-001\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"NG\",\n  \"txn_city\": \"Hubballi\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 1,\n  \"login_to_pay_seconds\": 6.0,\n  \"password_reset_last_24h\": 1,\n  \"sim_changed_last_7d\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('has score and band', () => { pm.expect(r.fraud_score).to.be.a('number'); pm.expect(r.risk_band).to.be.a('string'); });",
+              "console.log(r.txn_id, r.fraud_score, r.risk_band, r.reasons);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 6_invalid_request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"txn_id\": \"TXN99000002\",\n  \"txn_timestamp\": \"2026-05-09T14:42:50\",\n  \"customer_id\": \"C100637\",\n  \"amount\": 0,\n  \"channel\": \"BITCOIN\",\n  \"txn_type\": \"P2P_TRANSFER\",\n  \"payee_id\": \"ravi6352@ybl\",\n  \"merchant_category\": null,\n  \"remarks\": \"EMI\",\n  \"device_id\": \"D45404572\",\n  \"device_os\": \"Android\",\n  \"ip_country\": \"IN\",\n  \"txn_city\": \"Hubballi\",\n  \"is_international\": 0,\n  \"is_rooted_or_emulator\": 0,\n  \"vpn_or_proxy\": 0,\n  \"login_to_pay_seconds\": 19.1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 422', () => pm.response.to.have.status(422));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Score \u2014 batch of 3",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/score/batch",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "score",
+            "batch"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"payments\": [\n    {\n      \"txn_id\": \"TXN30082727\",\n      \"txn_timestamp\": \"2026-05-09T14:42:50\",\n      \"customer_id\": \"C100637\",\n      \"amount\": 591.0,\n      \"channel\": \"UPI\",\n      \"txn_type\": \"P2P_TRANSFER\",\n      \"payee_id\": \"ravi6352@ybl\",\n      \"merchant_category\": null,\n      \"remarks\": \"EMI\",\n      \"device_id\": \"D45404572\",\n      \"device_os\": \"Android\",\n      \"ip_country\": \"IN\",\n      \"txn_city\": \"Hubballi\",\n      \"is_international\": 0,\n      \"is_rooted_or_emulator\": 0,\n      \"vpn_or_proxy\": 0,\n      \"login_to_pay_seconds\": 19.1\n    },\n    {\n      \"txn_id\": \"TXN30090229\",\n      \"txn_timestamp\": \"2026-07-24T01:10:00\",\n      \"customer_id\": \"C101687\",\n      \"amount\": 42200.0,\n      \"channel\": \"UPI\",\n      \"txn_type\": \"P2P_TRANSFER\",\n      \"payee_id\": \"payment.verify770@paytm\",\n      \"merchant_category\": null,\n      \"remarks\": null,\n      \"device_id\": \"FD7440452\",\n      \"device_os\": \"Android\",\n      \"ip_country\": \"IN\",\n      \"txn_city\": \"Patna\",\n      \"is_international\": 0,\n      \"is_rooted_or_emulator\": 0,\n      \"vpn_or_proxy\": 0,\n      \"login_to_pay_seconds\": 19.5\n    },\n    {\n      \"txn_id\": \"TXN30087866\",\n      \"txn_timestamp\": \"2026-06-29T16:08:00\",\n      \"customer_id\": \"C100735\",\n      \"amount\": 1999.0,\n      \"channel\": \"UPI\",\n      \"txn_type\": \"P2P_TRANSFER\",\n      \"payee_id\": \"refund.desk579@upi\",\n      \"merchant_category\": null,\n      \"remarks\": null,\n      \"device_id\": \"D71325996\",\n      \"device_os\": \"Android\",\n      \"ip_country\": \"IN\",\n      \"txn_city\": \"Hyderabad\",\n      \"is_international\": 0,\n      \"is_rooted_or_emulator\": 0,\n      \"vpn_or_proxy\": 0,\n      \"login_to_pay_seconds\": 34.9\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

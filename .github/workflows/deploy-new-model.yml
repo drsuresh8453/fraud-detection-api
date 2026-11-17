@@ -1,0 +1,34 @@
+# Called by the SageMaker retraining notebook after a NEW MODEL is promoted (repository_dispatch "new-model"),
+# or by hand from the Actions tab. Restarts the pods so they load the new model from S3 immediately
+# (without this, pods still pick it up within MODEL_RELOAD_SECONDS).
+name: Deploy new model
+
+on:
+  repository_dispatch:
+    types: [new-model]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER: fraud-cluster
+  K8S_NAMESPACE: fraud
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+      - name: Rolling restart (zero downtime)
+        run: |
+          echo "New model version: ${{ github.event.client_payload.version }}"
+          kubectl rollout restart deployment/fraud-api -n $K8S_NAMESPACE
+          kubectl rollout status deployment/fraud-api -n $K8S_NAMESPACE --timeout=400s
+      - name: Check the live model version
+        run: |
+          HOST=$(kubectl get svc fraud-api -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          curl -sf http://$HOST/model-info

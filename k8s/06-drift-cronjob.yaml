@@ -1,0 +1,31 @@
+# Weekly drift check with Evidently AI — every Monday 03:00 UTC (08:30 IST).
+# If drift is found: SNS e-mail + SageMaker retraining job (monitoring/trigger_retrain.py).
+# Run it NOW:  kubectl create job --from=cronjob/fraud-drift-check drift-now -n fraud
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fraud-drift-check
+  namespace: fraud
+spec:
+  schedule: "0 3 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 10001}
+          containers:
+            - name: drift
+              image: IMAGE_PLACEHOLDER
+              imagePullPolicy: IfNotPresent
+              command: ["python3", "-m", "monitoring.detect_drift"]
+              envFrom:
+                - configMapRef: {name: fraud-api-config}
+                - secretRef: {name: aws-credentials}
+              resources:
+                requests: {cpu: "500m", memory: "1Gi"}
+                limits: {cpu: "2", memory: "3Gi"}

@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ProjectBucket",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::fraud-detection-project-2026-suresh",
+                   "arn:aws:s3:::fraud-detection-project-2026-suresh/*"]
+    },
+    {
+      "Sid": "PullImage",
+      "Effect": "Allow",
+      "Action": ["ecr:GetAuthorizationToken", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Logs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams", "cloudwatch:PutMetricData"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AlertsAndGitHubToken",
+      "Effect": "Allow",
+      "Action": ["sns:Publish", "secretsmanager:GetSecretValue"],
+      "Resource": "*"
+    }
+  ]
+}
